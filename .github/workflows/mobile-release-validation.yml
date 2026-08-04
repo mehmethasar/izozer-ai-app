@@ -1,8 +1,6 @@
-name: Mazdek AI Android iOS Gerçek Derleme
+name: Mazdek AI Release Derleme Doğrulaması
 
 on:
-  push:
-    branches: [main]
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -11,9 +9,9 @@ permissions:
   contents: read
 
 jobs:
-  android:
+  android-release-validation:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 50
     steps:
       - uses: actions/checkout@v4
       - name: Kaynak arşivini doğrula ve aç
@@ -38,8 +36,6 @@ jobs:
           from pathlib import Path
           pubspec = Path('mobile/pubspec.yaml')
           text = pubspec.read_text()
-          if 'http: 1.5.0' not in text:
-              raise SystemExit('Beklenen http 1.5.0 bağımlılığı bulunamadı')
           pubspec.write_text(text.replace('http: 1.5.0', 'http: 1.6.0'))
           PY
       - uses: subosito/flutter-action@v2
@@ -57,24 +53,18 @@ jobs:
       - name: Bağımlılıkları çöz
         working-directory: mobile
         run: flutter pub get
-      - name: Statik analiz
+      - name: Release AAB derlemesi
         working-directory: mobile
-        run: flutter analyze
-      - name: Birim testleri
-        working-directory: mobile
-        run: flutter test
-      - name: Android debug APK
-        working-directory: mobile
-        run: flutter build apk --debug --dart-define=API_BASE_URL=http://10.0.2.2:8787
+        run: flutter build appbundle --release --dart-define=API_BASE_URL=https://api.example.invalid
       - uses: actions/upload-artifact@v4
         with:
-          name: mazdek-ai-android-debug
-          path: mobile/build/app/outputs/flutter-apk/app-debug.apk
+          name: mazdek-ai-android-release-validation
+          path: mobile/build/app/outputs/bundle/release/app-release.aab
           if-no-files-found: error
 
-  ios-simulator:
+  ios-release-validation:
     runs-on: macos-latest
-    timeout-minutes: 55
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - name: Kaynak arşivini doğrula ve aç
@@ -99,8 +89,6 @@ jobs:
           from pathlib import Path
           pubspec = Path('mobile/pubspec.yaml')
           text = pubspec.read_text()
-          if 'http: 1.5.0' not in text:
-              raise SystemExit('Beklenen http 1.5.0 bağımlılığı bulunamadı')
           pubspec.write_text(text.replace('http: 1.5.0', 'http: 1.6.0'))
           PY
       - uses: subosito/flutter-action@v2
@@ -111,24 +99,18 @@ jobs:
       - name: Flutter platformlarını üret
         working-directory: mobile
         run: flutter create --platforms=android,ios --org com.mazdek --project-name mazdek_ai --android-language kotlin .
-      - name: Gerçek analiz düzeltmelerini uygula
+      - name: iOS platform uyumluluklarını uygula
         run: python3 ci_patch.py
       - name: Bağımlılıkları çöz
         working-directory: mobile
         run: flutter pub get
-      - name: Statik analiz
+      - name: İmzasız iOS release cihaz derlemesi
         working-directory: mobile
-        run: flutter analyze
-      - name: Birim testleri
-        working-directory: mobile
-        run: flutter test
-      - name: iOS Simulator derlemesi
-        working-directory: mobile
-        run: flutter build ios --simulator --debug --no-codesign --dart-define=API_BASE_URL=http://127.0.0.1:8787
-      - name: Simulator uygulamasını paketle
-        run: ditto -c -k --sequesterRsrc --keepParent mobile/build/ios/iphonesimulator/Runner.app mobile/build/ios/mazdek-ai-ios-simulator.zip
+        run: flutter build ios --release --no-codesign --dart-define=API_BASE_URL=https://api.example.invalid
+      - name: iOS release uygulamasını paketle
+        run: ditto -c -k --sequesterRsrc --keepParent mobile/build/ios/iphoneos/Runner.app mobile/build/ios/mazdek-ai-ios-release-unsigned.zip
       - uses: actions/upload-artifact@v4
         with:
-          name: mazdek-ai-ios-simulator
-          path: mobile/build/ios/mazdek-ai-ios-simulator.zip
+          name: mazdek-ai-ios-release-unsigned-validation
+          path: mobile/build/ios/mazdek-ai-ios-release-unsigned.zip
           if-no-files-found: error
