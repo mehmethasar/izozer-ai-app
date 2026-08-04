@@ -107,4 +107,20 @@ if podfile.exists():
         text = "platform :ios, '15.0'\n" + text
     podfile.write_text(text, encoding='utf-8')
 
-print('CI Flutter kaynak düzeltmeleri ve iOS 15 hedefi uygulandı.')
+# Eski Flutter eklentilerinin Java 11 / Kotlin 1.8 hedef çakışmasını gider.
+android_build = ROOT / 'android/build.gradle.kts'
+if android_build.exists():
+    text = android_build.read_text(encoding='utf-8')
+    marker = '// Mazdek AI: align plugin Kotlin tasks with Java 11'
+    if marker not in text:
+        text += f'''\n\n{marker}\nsubprojects {{\n    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {{\n        compilerOptions.jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)\n    }}\n}}\n'''
+    android_build.write_text(text, encoding='utf-8')
+
+gradle_properties = ROOT / 'android/gradle.properties'
+if gradle_properties.exists():
+    text = gradle_properties.read_text(encoding='utf-8')
+    if 'kotlin.jvm.target.validation.mode=warning' not in text:
+        text += '\nkotlin.jvm.target.validation.mode=warning\n'
+    gradle_properties.write_text(text, encoding='utf-8')
+
+print('CI Flutter kaynak düzeltmeleri, iOS 15 ve Android JVM 11 hedefi uygulandı.')
