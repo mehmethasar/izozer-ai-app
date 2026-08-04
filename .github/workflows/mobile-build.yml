@@ -1,4 +1,4 @@
-name: Mazdek AI Android iOS Gerçek Derleme
+name: Mazdek Android iOS Gerçek Derleme
 
 on:
   push:
@@ -50,9 +50,10 @@ jobs:
       - name: Flutter platformlarını üret
         working-directory: mobile
         run: flutter create --platforms=android,ios --org com.mazdek --project-name mazdek_ai --android-language kotlin .
-      - name: Android platform uyumluluklarını uygula
+      - name: Android platform, marka ve alan adı uyumluluklarını uygula
         run: |
           python3 ci_patch.py
+          python3 ci_branding_domain.py
           python3 ci_compile_sdk.py
       - name: Bağımlılıkları çöz
         working-directory: mobile
@@ -68,7 +69,7 @@ jobs:
         run: flutter build apk --debug --dart-define=API_BASE_URL=http://10.0.2.2:8787
       - uses: actions/upload-artifact@v4
         with:
-          name: mazdek-ai-android-debug
+          name: mazdek-android-debug
           path: mobile/build/app/outputs/flutter-apk/app-debug.apk
           if-no-files-found: error
 
@@ -111,8 +112,10 @@ jobs:
       - name: Flutter platformlarını üret
         working-directory: mobile
         run: flutter create --platforms=android,ios --org com.mazdek --project-name mazdek_ai --android-language kotlin .
-      - name: Gerçek analiz düzeltmelerini uygula
-        run: python3 ci_patch.py
+      - name: iOS platform, marka ve alan adı uyumluluklarını uygula
+        run: |
+          python3 ci_patch.py
+          python3 ci_branding_domain.py
       - name: Bağımlılıkları çöz
         working-directory: mobile
         run: flutter pub get
@@ -126,9 +129,9 @@ jobs:
         working-directory: mobile
         run: flutter build ios --simulator --debug --no-codesign --dart-define=API_BASE_URL=http://127.0.0.1:8787
       - name: Simulator uygulamasını paketle
-        run: ditto -c -k --sequesterRsrc --keepParent mobile/build/ios/iphonesimulator/Runner.app mobile/build/ios/mazdek-ai-ios-simulator.zip
+        run: ditto -c -k --sequesterRsrc --keepParent mobile/build/ios/iphonesimulator/Runner.app mobile/build/ios/mazdek-ios-simulator.zip
       - uses: actions/upload-artifact@v4
         with:
-          name: mazdek-ai-ios-simulator
-          path: mobile/build/ios/mazdek-ai-ios-simulator.zip
+          name: mazdek-ios-simulator
+          path: mobile/build/ios/mazdek-ios-simulator.zip
           if-no-files-found: error

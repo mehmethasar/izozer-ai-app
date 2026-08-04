@@ -1,4 +1,4 @@
-name: Mazdek AI Release Derleme Doğrulaması
+name: Mazdek Release Derleme Doğrulaması
 
 on:
   pull_request:
@@ -46,19 +46,24 @@ jobs:
       - name: Flutter platformlarını üret
         working-directory: mobile
         run: flutter create --platforms=android,ios --org com.mazdek --project-name mazdek_ai --android-language kotlin .
-      - name: Android platform uyumluluklarını uygula
+      - name: Android platform, marka ve alan adı uyumluluklarını uygula
         run: |
           python3 ci_patch.py
+          python3 ci_branding_domain.py
           python3 ci_compile_sdk.py
       - name: Bağımlılıkları çöz
         working-directory: mobile
         run: flutter pub get
       - name: Release AAB derlemesi
         working-directory: mobile
-        run: flutter build appbundle --release --dart-define=API_BASE_URL=https://api.example.invalid
+        run: >-
+          flutter build appbundle --release
+          --dart-define=API_BASE_URL=https://api.izozer.com
+          --dart-define=APPLE_SERVICE_ID=com.mazdek.mazdekai.service
+          --dart-define=APPLE_REDIRECT_URI=https://api.izozer.com/auth/apple/callback
       - uses: actions/upload-artifact@v4
         with:
-          name: mazdek-ai-android-release-validation
+          name: mazdek-android-release-validation
           path: mobile/build/app/outputs/bundle/release/app-release.aab
           if-no-files-found: error
 
@@ -99,18 +104,24 @@ jobs:
       - name: Flutter platformlarını üret
         working-directory: mobile
         run: flutter create --platforms=android,ios --org com.mazdek --project-name mazdek_ai --android-language kotlin .
-      - name: iOS platform uyumluluklarını uygula
-        run: python3 ci_patch.py
+      - name: iOS platform, marka ve alan adı uyumluluklarını uygula
+        run: |
+          python3 ci_patch.py
+          python3 ci_branding_domain.py
       - name: Bağımlılıkları çöz
         working-directory: mobile
         run: flutter pub get
       - name: İmzasız iOS release cihaz derlemesi
         working-directory: mobile
-        run: flutter build ios --release --no-codesign --dart-define=API_BASE_URL=https://api.example.invalid
+        run: >-
+          flutter build ios --release --no-codesign
+          --dart-define=API_BASE_URL=https://api.izozer.com
+          --dart-define=APPLE_SERVICE_ID=com.mazdek.mazdekai.service
+          --dart-define=APPLE_REDIRECT_URI=https://api.izozer.com/auth/apple/callback
       - name: iOS release uygulamasını paketle
-        run: ditto -c -k --sequesterRsrc --keepParent mobile/build/ios/iphoneos/Runner.app mobile/build/ios/mazdek-ai-ios-release-unsigned.zip
+        run: ditto -c -k --sequesterRsrc --keepParent mobile/build/ios/iphoneos/Runner.app mobile/build/ios/mazdek-ios-release-unsigned.zip
       - uses: actions/upload-artifact@v4
         with:
-          name: mazdek-ai-ios-release-unsigned-validation
-          path: mobile/build/ios/mazdek-ai-ios-release-unsigned.zip
+          name: mazdek-ios-release-unsigned-validation
+          path: mobile/build/ios/mazdek-ios-release-unsigned.zip
           if-no-files-found: error
