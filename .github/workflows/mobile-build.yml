@@ -34,6 +34,14 @@ jobs:
           print(f'Kaynak doğrulandı: {actual}, {len(raw)} bayt')
           PY
           tar -xJf mobile-source.tar.xz
+          python3 - <<'PY'
+          from pathlib import Path
+          pubspec = Path('mobile/pubspec.yaml')
+          text = pubspec.read_text()
+          if 'http: 1.5.0' not in text:
+              raise SystemExit('Beklenen http 1.5.0 bağımlılığı bulunamadı')
+          pubspec.write_text(text.replace('http: 1.5.0', 'http: 1.6.0'))
+          PY
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.44.7'
@@ -41,7 +49,7 @@ jobs:
           cache: true
       - name: Flutter platformlarını üret
         working-directory: mobile
-        run: flutter create --platforms=android,ios --org com.mazdek --project-name mazdek_ai --android-language kotlin --ios-language swift .
+        run: flutter create --platforms=android,ios --org com.mazdek --project-name mazdek_ai --android-language kotlin .
       - name: Bağımlılıkları çöz
         working-directory: mobile
         run: flutter pub get
@@ -83,6 +91,14 @@ jobs:
           print(f'Kaynak doğrulandı: {actual}, {len(raw)} bayt')
           PY
           tar -xJf mobile-source.tar.xz
+          python3 - <<'PY'
+          from pathlib import Path
+          pubspec = Path('mobile/pubspec.yaml')
+          text = pubspec.read_text()
+          if 'http: 1.5.0' not in text:
+              raise SystemExit('Beklenen http 1.5.0 bağımlılığı bulunamadı')
+          pubspec.write_text(text.replace('http: 1.5.0', 'http: 1.6.0'))
+          PY
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.44.7'
@@ -90,7 +106,7 @@ jobs:
           cache: true
       - name: Flutter platformlarını üret
         working-directory: mobile
-        run: flutter create --platforms=android,ios --org com.mazdek --project-name mazdek_ai --android-language kotlin --ios-language swift .
+        run: flutter create --platforms=android,ios --org com.mazdek --project-name mazdek_ai --android-language kotlin .
       - name: Bağımlılıkları çöz
         working-directory: mobile
         run: flutter pub get
