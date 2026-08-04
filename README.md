@@ -1,3 +1,5 @@
-# Mazdek AI Mobil Derleme Deposu
+# Mazdek AI Mobil Gerçek Derleme
 
-Bu depo, Mazdek AI Android ve iOS Flutter istemcisinin gerçek CI derlemelerini doğrulamak için kullanılır. Kaynak pakette API anahtarı, parola, keystore veya Apple/Firebase özel anahtarı bulunmaz.
+Bu depo Mazdek AI Flutter istemcisini GitHub Actions üzerinde gerçek Flutter SDK ile analiz eder, test eder ve Android/iOS derleme çıktıları üretir.
+
+Kaynak arşivinde API anahtarı, parola, keystore veya Apple/Firebase özel anahtarı bulunmaz.

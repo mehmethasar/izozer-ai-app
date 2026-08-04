@@ -1,0 +1,78 @@
+name: Mazdek AI Android iOS Gerçek Derleme
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Kaynakları aç
+        run: tar -xJf mobile-source.tar.xz
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.7'
+          channel: stable
+          cache: true
+      - name: Flutter platformlarını üret
+        working-directory: mobile
+        run: flutter create --platforms=android,ios --org com.mazdek --project-name mazdek_ai --android-language kotlin --ios-language swift .
+      - name: Bağımlılıkları çöz
+        working-directory: mobile
+        run: flutter pub get
+      - name: Statik analiz
+        working-directory: mobile
+        run: flutter analyze
+      - name: Birim testleri
+        working-directory: mobile
+        run: flutter test
+      - name: Android debug APK
+        working-directory: mobile
+        run: flutter build apk --debug --dart-define=API_BASE_URL=http://10.0.2.2:8787
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mazdek-ai-android-debug
+          path: mobile/build/app/outputs/flutter-apk/app-debug.apk
+          if-no-files-found: error
+
+  ios-simulator:
+    runs-on: macos-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - name: Kaynakları aç
+        run: tar -xJf mobile-source.tar.xz
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.7'
+          channel: stable
+          cache: true
+      - name: Flutter platformlarını üret
+        working-directory: mobile
+        run: flutter create --platforms=android,ios --org com.mazdek --project-name mazdek_ai --android-language kotlin --ios-language swift .
+      - name: Bağımlılıkları çöz
+        working-directory: mobile
+        run: flutter pub get
+      - name: Statik analiz
+        working-directory: mobile
+        run: flutter analyze
+      - name: Birim testleri
+        working-directory: mobile
+        run: flutter test
+      - name: iOS Simulator derlemesi
+        working-directory: mobile
+        run: flutter build ios --simulator --debug --no-codesign --dart-define=API_BASE_URL=http://127.0.0.1:8787
+      - name: Simulator uygulamasını paketle
+        run: ditto -c -k --sequesterRsrc --keepParent mobile/build/ios/iphonesimulator/Runner.app mobile/build/ios/mazdek-ai-ios-simulator.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mazdek-ai-ios-simulator
+          path: mobile/build/ios/mazdek-ai-ios-simulator.zip
+          if-no-files-found: error
