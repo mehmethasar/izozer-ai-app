@@ -41,8 +41,13 @@ replace(
 )
 replace(
     'lib/screens/account_privacy_screen.dart',
+    "  Future<void> deleteAccount() async {\n    final password = TextEditingController();",
+    "  Future<void> deleteAccount() async {\n    final appState = AppScope.of(context);\n    final password = TextEditingController();",
+)
+replace(
+    'lib/screens/account_privacy_screen.dart',
     "    try {\n      await AppScope.of(context).api.deleteAccount(currentPassword: password.text, confirmation: confirmation.text);\n      if (mounted) await AppScope.of(context).logout();",
-    "    final appState = AppScope.of(context);\n    try {\n      await appState.api.deleteAccount(currentPassword: password.text, confirmation: confirmation.text);\n      if (mounted) await appState.logout();",
+    "    try {\n      await appState.api.deleteAccount(currentPassword: password.text, confirmation: confirmation.text);\n      if (mounted) await appState.logout();",
 )
 replace(
     'lib/screens/settings_screen.dart',
