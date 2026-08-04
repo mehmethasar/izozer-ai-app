@@ -123,4 +123,32 @@ if gradle_properties.exists():
         text += '\nkotlin.jvm.target.validation.mode=warning\n'
     gradle_properties.write_text(text, encoding='utf-8')
 
-print('CI Flutter kaynak düzeltmeleri, iOS 15 ve Android JVM 11 hedefi uygulandı.')
+# flutter_local_notifications, Java zaman API'leri için core-library desugaring gerektirir.
+app_build = ROOT / 'android/app/build.gradle.kts'
+if app_build.exists():
+    text = app_build.read_text(encoding='utf-8')
+    if 'isCoreLibraryDesugaringEnabled = true' not in text:
+        updated = re.sub(
+            r'(compileOptions\s*\{)',
+            r'\1\n        isCoreLibraryDesugaringEnabled = true',
+            text,
+            count=1,
+        )
+        if updated == text:
+            raise SystemExit('Android compileOptions bloğu bulunamadı.')
+        text = updated
+    desugar_dependency = 'coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")'
+    if desugar_dependency not in text:
+        dependencies_match = re.search(r'\ndependencies\s*\{', text)
+        if dependencies_match:
+            text = re.sub(
+                r'(\ndependencies\s*\{)',
+                r'\1\n    ' + desugar_dependency,
+                text,
+                count=1,
+            )
+        else:
+            text += f'\n\ndependencies {{\n    {desugar_dependency}\n}}\n'
+    app_build.write_text(text, encoding='utf-8')
+
+print('CI Flutter kaynak düzeltmeleri, iOS 15, Android JVM 11 ve desugaring uygulandı.')
