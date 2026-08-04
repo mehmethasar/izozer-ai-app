@@ -3,6 +3,8 @@ name: Mazdek AI Android iOS Gerçek Derleme
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
