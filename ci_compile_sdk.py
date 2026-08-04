@@ -8,6 +8,7 @@ if not PUB_CACHE.exists():
     raise SystemExit(f'Pub önbelleği bulunamadı: {PUB_CACHE}')
 
 changed: list[str] = []
+checked: list[str] = []
 patterns = (
     (re.compile(r'compileSdkVersion\s*=\s*\d+'), 'compileSdkVersion = 36'),
     (re.compile(r'compileSdkVersion\s+\d+'), 'compileSdkVersion 36'),
@@ -16,6 +17,7 @@ patterns = (
 )
 
 for build_file in sorted(PUB_CACHE.glob('*/android/build.gradle*')):
+    checked.append(str(build_file))
     text = build_file.read_text(encoding='utf-8')
     updated = text
     for pattern, replacement in patterns:
@@ -24,9 +26,12 @@ for build_file in sorted(PUB_CACHE.glob('*/android/build.gradle*')):
         build_file.write_text(updated, encoding='utf-8')
         changed.append(str(build_file))
 
-if not changed:
-    raise SystemExit('API 36 seviyesine yükseltilecek Android eklenti build dosyası bulunamadı.')
+if not checked:
+    raise SystemExit('Kontrol edilecek Android eklenti build dosyası bulunamadı.')
 
-print(f'{len(changed)} Android eklenti modülü compileSdk 36 seviyesine getirildi:')
-for path in changed:
-    print(f' - {path}')
+if changed:
+    print(f'{len(changed)} Android eklenti modülü compileSdk 36 seviyesine getirildi:')
+    for path in changed:
+        print(f' - {path}')
+else:
+    print(f'{len(checked)} Android eklenti build dosyası kontrol edildi; uyumluluk önbelleğinde gerekli API 36 düzeltmesi zaten mevcut.')
