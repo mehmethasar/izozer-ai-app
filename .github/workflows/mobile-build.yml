@@ -50,6 +50,8 @@ jobs:
       - name: Flutter platformlarını üret
         working-directory: mobile
         run: flutter create --platforms=android,ios --org com.mazdek --project-name mazdek_ai --android-language kotlin .
+      - name: Gerçek analiz düzeltmelerini uygula
+        run: python3 ci_patch.py
       - name: Bağımlılıkları çöz
         working-directory: mobile
         run: flutter pub get
@@ -107,6 +109,8 @@ jobs:
       - name: Flutter platformlarını üret
         working-directory: mobile
         run: flutter create --platforms=android,ios --org com.mazdek --project-name mazdek_ai --android-language kotlin .
+      - name: Gerçek analiz düzeltmelerini uygula
+        run: python3 ci_patch.py
       - name: Bağımlılıkları çöz
         working-directory: mobile
         run: flutter pub get
