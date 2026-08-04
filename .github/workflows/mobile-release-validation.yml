@@ -1,0 +1,116 @@
+name: Mazdek AI Release Derleme Doğrulaması
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  android-release-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - name: Kaynak arşivini doğrula ve aç
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import base64, hashlib, pathlib
+          parts = sorted(pathlib.Path('parts').glob('part*.b64'))
+          if len(parts) != 21:
+              raise SystemExit(f'21 kaynak parçası bekleniyordu, bulunan: {len(parts)}')
+          encoded = ''.join(path.read_text().strip() for path in parts)
+          raw = base64.b64decode(encoded, validate=True)
+          actual = hashlib.sha256(raw).hexdigest()
+          expected = '080cda193a47e16e268bbb24c455529bd8dfdf1a1037a0b9e4589b727bcae2eb'
+          if actual != expected:
+              raise SystemExit(f'Kaynak SHA-256 uyuşmazlığı: {actual}')
+          pathlib.Path('mobile-source.tar.xz').write_bytes(raw)
+          print(f'Kaynak doğrulandı: {actual}, {len(raw)} bayt')
+          PY
+          tar -xJf mobile-source.tar.xz
+          python3 - <<'PY'
+          from pathlib import Path
+          pubspec = Path('mobile/pubspec.yaml')
+          text = pubspec.read_text()
+          pubspec.write_text(text.replace('http: 1.5.0', 'http: 1.6.0'))
+          PY
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.7'
+          channel: stable
+          cache: true
+      - name: Flutter platformlarını üret
+        working-directory: mobile
+        run: flutter create --platforms=android,ios --org com.mazdek --project-name mazdek_ai --android-language kotlin .
+      - name: Android platform uyumluluklarını uygula
+        run: |
+          python3 ci_patch.py
+          python3 ci_compile_sdk.py
+      - name: Bağımlılıkları çöz
+        working-directory: mobile
+        run: flutter pub get
+      - name: Release AAB derlemesi
+        working-directory: mobile
+        run: flutter build appbundle --release --dart-define=API_BASE_URL=https://api.example.invalid
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mazdek-ai-android-release-validation
+          path: mobile/build/app/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+
+  ios-release-validation:
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Kaynak arşivini doğrula ve aç
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import base64, hashlib, pathlib
+          parts = sorted(pathlib.Path('parts').glob('part*.b64'))
+          if len(parts) != 21:
+              raise SystemExit(f'21 kaynak parçası bekleniyordu, bulunan: {len(parts)}')
+          encoded = ''.join(path.read_text().strip() for path in parts)
+          raw = base64.b64decode(encoded, validate=True)
+          actual = hashlib.sha256(raw).hexdigest()
+          expected = '080cda193a47e16e268bbb24c455529bd8dfdf1a1037a0b9e4589b727bcae2eb'
+          if actual != expected:
+              raise SystemExit(f'Kaynak SHA-256 uyuşmazlığı: {actual}')
+          pathlib.Path('mobile-source.tar.xz').write_bytes(raw)
+          print(f'Kaynak doğrulandı: {actual}, {len(raw)} bayt')
+          PY
+          tar -xJf mobile-source.tar.xz
+          python3 - <<'PY'
+          from pathlib import Path
+          pubspec = Path('mobile/pubspec.yaml')
+          text = pubspec.read_text()
+          pubspec.write_text(text.replace('http: 1.5.0', 'http: 1.6.0'))
+          PY
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.7'
+          channel: stable
+          cache: true
+      - name: Flutter platformlarını üret
+        working-directory: mobile
+        run: flutter create --platforms=android,ios --org com.mazdek --project-name mazdek_ai --android-language kotlin .
+      - name: iOS platform uyumluluklarını uygula
+        run: python3 ci_patch.py
+      - name: Bağımlılıkları çöz
+        working-directory: mobile
+        run: flutter pub get
+      - name: İmzasız iOS release cihaz derlemesi
+        working-directory: mobile
+        run: flutter build ios --release --no-codesign --dart-define=API_BASE_URL=https://api.example.invalid
+      - name: iOS release uygulamasını paketle
+        run: ditto -c -k --sequesterRsrc --keepParent mobile/build/ios/iphoneos/Runner.app mobile/build/ios/mazdek-ai-ios-release-unsigned.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mazdek-ai-ios-release-unsigned-validation
+          path: mobile/build/ios/mazdek-ai-ios-release-unsigned.zip
+          if-no-files-found: error
