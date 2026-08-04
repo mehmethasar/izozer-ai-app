@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import base64
+import plistlib
+import re
 from pathlib import Path
 
 ROOT = Path('mobile')
@@ -81,4 +83,28 @@ if not asset.exists():
         'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl2S6sAAAAASUVORK5CYII='
     ))
 
-print('CI Flutter kaynak düzeltmeleri uygulandı.')
+# Firebase Core/Messaging 4.x, iOS 15 veya üzerini gerektiriyor.
+project = ROOT / 'ios/Runner.xcodeproj/project.pbxproj'
+if project.exists():
+    text = project.read_text(encoding='utf-8')
+    text = re.sub(r'IPHONEOS_DEPLOYMENT_TARGET = [0-9.]+;', 'IPHONEOS_DEPLOYMENT_TARGET = 15.0;', text)
+    project.write_text(text, encoding='utf-8')
+
+framework_info = ROOT / 'ios/Flutter/AppFrameworkInfo.plist'
+if framework_info.exists():
+    with framework_info.open('rb') as handle:
+        data = plistlib.load(handle)
+    data['MinimumOSVersion'] = '15.0'
+    with framework_info.open('wb') as handle:
+        plistlib.dump(data, handle, sort_keys=False)
+
+podfile = ROOT / 'ios/Podfile'
+if podfile.exists():
+    text = podfile.read_text(encoding='utf-8')
+    if re.search(r"platform :ios, '[^']+'", text):
+        text = re.sub(r"platform :ios, '[^']+'", "platform :ios, '15.0'", text)
+    else:
+        text = "platform :ios, '15.0'\n" + text
+    podfile.write_text(text, encoding='utf-8')
+
+print('CI Flutter kaynak düzeltmeleri ve iOS 15 hedefi uygulandı.')
