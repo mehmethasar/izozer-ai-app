@@ -1,0 +1,1 @@
+Mazdek uygulaması canlı ortamda https://izozer.com adresini kullanacaktır.
