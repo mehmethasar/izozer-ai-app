@@ -58,12 +58,12 @@ jobs:
         working-directory: mobile
         run: >-
           flutter build appbundle --release
-          --dart-define=API_BASE_URL=https://api.izozer.com
+          --dart-define=API_BASE_URL=https://izozer.com
           --dart-define=APPLE_SERVICE_ID=com.mazdek.mazdekai.service
-          --dart-define=APPLE_REDIRECT_URI=https://api.izozer.com/auth/apple/callback
+          --dart-define=APPLE_REDIRECT_URI=https://izozer.com/auth/apple/callback
       - uses: actions/upload-artifact@v4
         with:
-          name: mazdek-android-release-validation
+          name: mazdek-android-release-izozer-root-validation
           path: mobile/build/app/outputs/bundle/release/app-release.aab
           if-no-files-found: error
 
@@ -115,13 +115,13 @@ jobs:
         working-directory: mobile
         run: >-
           flutter build ios --release --no-codesign
-          --dart-define=API_BASE_URL=https://api.izozer.com
+          --dart-define=API_BASE_URL=https://izozer.com
           --dart-define=APPLE_SERVICE_ID=com.mazdek.mazdekai.service
-          --dart-define=APPLE_REDIRECT_URI=https://api.izozer.com/auth/apple/callback
+          --dart-define=APPLE_REDIRECT_URI=https://izozer.com/auth/apple/callback
       - name: iOS release uygulamasını paketle
         run: ditto -c -k --sequesterRsrc --keepParent mobile/build/ios/iphoneos/Runner.app mobile/build/ios/mazdek-ios-release-unsigned.zip
       - uses: actions/upload-artifact@v4
         with:
-          name: mazdek-ios-release-unsigned-validation
+          name: mazdek-ios-release-izozer-root-unsigned-validation
           path: mobile/build/ios/mazdek-ios-release-unsigned.zip
           if-no-files-found: error
