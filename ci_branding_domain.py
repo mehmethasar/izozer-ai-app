@@ -8,6 +8,7 @@ ROOT = Path('mobile')
 API_URL = 'https://api.izozer.com'
 APPLE_REDIRECT = f'{API_URL}/auth/apple/callback'
 APP_NAME = 'Mazdek'
+APP_VERSION = '2.1.2+4'
 BUNDLE_ID = 'com.mazdek.mazdekai'
 
 
@@ -31,6 +32,7 @@ def configure_app_config(text: str) -> str:
     return text
 
 
+rewrite_text('pubspec.yaml', lambda text: re.sub(r'^version:\s*\S+\s*$', f'version: {APP_VERSION}', text, flags=re.MULTILINE))
 rewrite_text('lib/core/config/app_config.dart', configure_app_config)
 rewrite_text(
     'lib/screens/login_screen.dart',
@@ -103,6 +105,6 @@ if xcode_project.exists():
     xcode_project.write_text(text, encoding='utf-8')
 
 print(
-    f'Uygulama adı {APP_NAME}; Android/iOS kimliği {BUNDLE_ID}; '
+    f'Uygulama adı {APP_NAME}; sürüm {APP_VERSION}; Android/iOS kimliği {BUNDLE_ID}; '
     f'canlı API {API_URL}; Apple dönüşü {APPLE_REDIRECT} olarak yapılandırıldı.'
 )
