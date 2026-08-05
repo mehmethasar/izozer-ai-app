@@ -5,7 +5,7 @@ import re
 from pathlib import Path
 
 ROOT = Path('mobile')
-API_URL = 'https://izozer.com'
+API_URL = 'https://api.izozer.com'
 APPLE_REDIRECT = f'{API_URL}/auth/apple/callback'
 APP_NAME = 'Mazdek'
 BUNDLE_ID = 'com.mazdek.mazdekai'
@@ -25,7 +25,7 @@ def configure_app_config(text: str) -> str:
     text = re.sub(r"static const String appName = '[^']*';", "static const String appName = 'Mazdek';", text)
     text = re.sub(
         r"defaultValue: kReleaseMode \? '[^']*' : 'http://10\.0\.2\.2:8787',",
-        "defaultValue: kReleaseMode ? 'https://izozer.com' : 'http://10.0.2.2:8787',",
+        "defaultValue: kReleaseMode ? 'https://api.izozer.com' : 'http://10.0.2.2:8787',",
         text,
     )
     return text
@@ -37,8 +37,8 @@ rewrite_text(
     lambda text: text
     .replace("'Mazdek AI Yönetim',", "'Mazdek',")
     .replace("'Mazdek AI',", "'Mazdek',")
-    .replace("hintText: 'https://api.sirketiniz.com',", "hintText: 'https://izozer.com',")
-    .replace("hintText: 'https://api.izozer.com',", "hintText: 'https://izozer.com',"),
+    .replace("hintText: 'https://api.sirketiniz.com',", "hintText: 'https://api.izozer.com',")
+    .replace("hintText: 'https://izozer.com',", "hintText: 'https://api.izozer.com',"),
 )
 rewrite_text('store/app-store/tr-TR/name.txt', lambda _text: 'Mazdek\n')
 rewrite_text('fastlane/metadata/android/tr-TR/title.txt', lambda _text: 'Mazdek\n')
@@ -46,6 +46,7 @@ rewrite_text(
     '.env.build.example',
     lambda text: re.sub(r'^API_BASE_URL=.*$', f'API_BASE_URL={API_URL}', text, flags=re.MULTILINE)
     .replace('https://api.sirketiniz.com/auth/apple/callback', APPLE_REDIRECT)
+    .replace('https://izozer.com/auth/apple/callback', APPLE_REDIRECT)
     .replace('https://api.izozer.com/auth/apple/callback', APPLE_REDIRECT),
 )
 
@@ -56,7 +57,14 @@ for target in ROOT.rglob('*'):
         text = target.read_text(encoding='utf-8')
     except UnicodeDecodeError:
         continue
-    updated = text.replace('https://api.izozer.com', API_URL).replace('Mazdek AI Yönetim', APP_NAME).replace('Mazdek AI', APP_NAME)
+    updated = (
+        text
+        .replace('https://izozer.com/auth/apple/callback', APPLE_REDIRECT)
+        .replace('https://izozer.com/privacy', f'{API_URL}/privacy')
+        .replace('https://api.izozer.com', API_URL)
+        .replace('Mazdek AI Yönetim', APP_NAME)
+        .replace('Mazdek AI', APP_NAME)
+    )
     if updated != text:
         target.write_text(updated, encoding='utf-8')
 
