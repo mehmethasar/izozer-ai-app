@@ -50,11 +50,14 @@ jobs:
       - name: Flutter platformlarını üret
         working-directory: mobile
         run: flutter create --platforms=android,ios --org com.mazdek --project-name mazdek_ai --android-language kotlin .
-      - name: Android platform, marka ve alan adı uyumluluklarını uygula
+      - name: Android platform, marka, sürüm ve alan adı uyumluluklarını uygula
         run: |
           python3 ci_patch.py
           python3 ci_branding_domain.py
           python3 ci_compile_sdk.py
+          grep -q '^version: 2.1.2+4$' mobile/pubspec.yaml
+          grep -q "static const String appName = 'Mazdek'" mobile/lib/core/config/app_config.dart
+          grep -q 'https://api.izozer.com' mobile/lib/core/config/app_config.dart
       - name: Bağımlılıkları çöz
         working-directory: mobile
         run: flutter pub get
@@ -64,12 +67,16 @@ jobs:
       - name: Birim testleri
         working-directory: mobile
         run: flutter test
-      - name: Android debug APK
+      - name: Android kurulabilir test APK
         working-directory: mobile
-        run: flutter build apk --debug --dart-define=API_BASE_URL=http://10.0.2.2:8787
+        run: >-
+          flutter build apk --debug
+          --dart-define=API_BASE_URL=https://api.izozer.com
+          --dart-define=APPLE_SERVICE_ID=com.mazdek.mazdekai.service
+          --dart-define=APPLE_REDIRECT_URI=https://api.izozer.com/auth/apple/callback
       - uses: actions/upload-artifact@v4
         with:
-          name: mazdek-android-debug
+          name: mazdek-android-api-izozer-test-apk
           path: mobile/build/app/outputs/flutter-apk/app-debug.apk
           if-no-files-found: error
 
@@ -112,10 +119,13 @@ jobs:
       - name: Flutter platformlarını üret
         working-directory: mobile
         run: flutter create --platforms=android,ios --org com.mazdek --project-name mazdek_ai --android-language kotlin .
-      - name: iOS platform, marka ve alan adı uyumluluklarını uygula
+      - name: iOS platform, marka, sürüm ve alan adı uyumluluklarını uygula
         run: |
           python3 ci_patch.py
           python3 ci_branding_domain.py
+          grep -q '^version: 2.1.2+4$' mobile/pubspec.yaml
+          grep -q "static const String appName = 'Mazdek'" mobile/lib/core/config/app_config.dart
+          grep -q 'https://api.izozer.com' mobile/lib/core/config/app_config.dart
       - name: Bağımlılıkları çöz
         working-directory: mobile
         run: flutter pub get
@@ -127,11 +137,15 @@ jobs:
         run: flutter test
       - name: iOS Simulator derlemesi
         working-directory: mobile
-        run: flutter build ios --simulator --debug --no-codesign --dart-define=API_BASE_URL=http://127.0.0.1:8787
+        run: >-
+          flutter build ios --simulator --debug --no-codesign
+          --dart-define=API_BASE_URL=https://api.izozer.com
+          --dart-define=APPLE_SERVICE_ID=com.mazdek.mazdekai.service
+          --dart-define=APPLE_REDIRECT_URI=https://api.izozer.com/auth/apple/callback
       - name: Simulator uygulamasını paketle
         run: ditto -c -k --sequesterRsrc --keepParent mobile/build/ios/iphonesimulator/Runner.app mobile/build/ios/mazdek-ios-simulator.zip
       - uses: actions/upload-artifact@v4
         with:
-          name: mazdek-ios-simulator
+          name: mazdek-ios-api-izozer-simulator
           path: mobile/build/ios/mazdek-ios-simulator.zip
           if-no-files-found: error
