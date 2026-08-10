@@ -22,4 +22,4 @@ Değer: Mazdek uygulama sunucusunun sabit IPv4 adresi
 TTL: Otomatik veya 300
 ```
 
-Uygulama sunucusunda `api.izozer.com` için geçerli HTTPS sertifikası zorunludur. Mobil release sürümleri düz HTTP adreslerine bağlanmaz.
+Uygulama sunucusunda `api.izozer.com` için geçerli HTTPS sertifikası zorunludur. Mobil release sürümleri yalnızca `https://api.izozer.com` kökenine bağlanır; kaydedilmiş özel sunucu adreslerini yok sayar ve sunucu düzenleme arayüzünü göstermez.
