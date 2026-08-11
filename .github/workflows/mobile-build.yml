@@ -51,7 +51,7 @@ jobs:
           --dart-define=API_BASE_URL=https://api.izozer.com
           --dart-define=APPLE_SERVICE_ID=com.mazdek.mazdekai.service
           --dart-define=APPLE_REDIRECT_URI=https://api.izozer.com/auth/apple/callback
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: mazdek-android-api-izozer-test-apk
           path: mobile/build/app/outputs/flutter-apk/app-debug.apk
@@ -97,7 +97,7 @@ jobs:
           --dart-define=APPLE_REDIRECT_URI=https://api.izozer.com/auth/apple/callback
       - name: Simulator uygulamasını paketle
         run: ditto -c -k --sequesterRsrc --keepParent mobile/build/ios/iphonesimulator/Runner.app mobile/build/ios/mazdek-ios-simulator.zip
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: mazdek-ios-api-izozer-simulator
           path: mobile/build/ios/mazdek-ios-simulator.zip
