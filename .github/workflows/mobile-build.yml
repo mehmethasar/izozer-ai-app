@@ -15,52 +15,29 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v4
-      - name: Kaynak arşivini doğrula ve aç
-        shell: bash
-        run: |
-          python3 - <<'PY'
-          import base64, hashlib, pathlib
-          parts = sorted(pathlib.Path('parts').glob('part*.b64'))
-          if len(parts) != 21:
-              raise SystemExit(f'21 kaynak parçası bekleniyordu, bulunan: {len(parts)}')
-          encoded = ''.join(path.read_text().strip() for path in parts)
-          raw = base64.b64decode(encoded, validate=True)
-          actual = hashlib.sha256(raw).hexdigest()
-          expected = '080cda193a47e16e268bbb24c455529bd8dfdf1a1037a0b9e4589b727bcae2eb'
-          if actual != expected:
-              raise SystemExit(f'Kaynak SHA-256 uyuşmazlığı: {actual}')
-          pathlib.Path('mobile-source.tar.xz').write_bytes(raw)
-          print(f'Kaynak doğrulandı: {actual}, {len(raw)} bayt')
-          PY
-          tar -xJf mobile-source.tar.xz
-          python3 - <<'PY'
-          from pathlib import Path
-          pubspec = Path('mobile/pubspec.yaml')
-          text = pubspec.read_text()
-          if 'http: 1.5.0' not in text:
-              raise SystemExit('Beklenen http 1.5.0 bağımlılığı bulunamadı')
-          pubspec.write_text(text.replace('http: 1.5.0', 'http: 1.6.0'))
-          PY
-      - uses: subosito/flutter-action@v2
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Kaynak ve güvenlik politikasını doğrula
+        run: python3 ci_verify_security.py
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
         with:
           flutter-version: '3.44.7'
           channel: stable
           cache: true
       - name: Flutter platformlarını üret
         working-directory: mobile
-        run: flutter create --platforms=android,ios --org com.mazdek --project-name mazdek_ai --android-language kotlin .
+        run: flutter create --no-pub --platforms=android,ios --org com.mazdek --project-name mazdek_ai --android-language kotlin .
       - name: Android platform, marka, sürüm ve alan adı uyumluluklarını uygula
         run: |
           python3 ci_patch.py
           python3 ci_branding_domain.py
-          python3 ci_compile_sdk.py
           grep -q '^version: 2.1.2+4$' mobile/pubspec.yaml
           grep -q "static const String appName = 'Mazdek'" mobile/lib/core/config/app_config.dart
-          grep -q 'https://api.izozer.com' mobile/lib/core/config/app_config.dart
+          grep -q "static const String productionApiUrl = 'https://api.izozer.com'" mobile/lib/core/config/app_config.dart
       - name: Bağımlılıkları çöz
         working-directory: mobile
         run: flutter pub get
+      - name: Android SDK bağımlılık uyumluluğunu uygula
+        run: python3 ci_compile_sdk.py
       - name: Statik analiz
         working-directory: mobile
         run: flutter analyze
@@ -74,7 +51,7 @@ jobs:
           --dart-define=API_BASE_URL=https://api.izozer.com
           --dart-define=APPLE_SERVICE_ID=com.mazdek.mazdekai.service
           --dart-define=APPLE_REDIRECT_URI=https://api.izozer.com/auth/apple/callback
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: mazdek-android-api-izozer-test-apk
           path: mobile/build/app/outputs/flutter-apk/app-debug.apk
@@ -84,48 +61,24 @@ jobs:
     runs-on: macos-latest
     timeout-minutes: 55
     steps:
-      - uses: actions/checkout@v4
-      - name: Kaynak arşivini doğrula ve aç
-        shell: bash
-        run: |
-          python3 - <<'PY'
-          import base64, hashlib, pathlib
-          parts = sorted(pathlib.Path('parts').glob('part*.b64'))
-          if len(parts) != 21:
-              raise SystemExit(f'21 kaynak parçası bekleniyordu, bulunan: {len(parts)}')
-          encoded = ''.join(path.read_text().strip() for path in parts)
-          raw = base64.b64decode(encoded, validate=True)
-          actual = hashlib.sha256(raw).hexdigest()
-          expected = '080cda193a47e16e268bbb24c455529bd8dfdf1a1037a0b9e4589b727bcae2eb'
-          if actual != expected:
-              raise SystemExit(f'Kaynak SHA-256 uyuşmazlığı: {actual}')
-          pathlib.Path('mobile-source.tar.xz').write_bytes(raw)
-          print(f'Kaynak doğrulandı: {actual}, {len(raw)} bayt')
-          PY
-          tar -xJf mobile-source.tar.xz
-          python3 - <<'PY'
-          from pathlib import Path
-          pubspec = Path('mobile/pubspec.yaml')
-          text = pubspec.read_text()
-          if 'http: 1.5.0' not in text:
-              raise SystemExit('Beklenen http 1.5.0 bağımlılığı bulunamadı')
-          pubspec.write_text(text.replace('http: 1.5.0', 'http: 1.6.0'))
-          PY
-      - uses: subosito/flutter-action@v2
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Kaynak ve güvenlik politikasını doğrula
+        run: python3 ci_verify_security.py
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
         with:
           flutter-version: '3.44.7'
           channel: stable
           cache: true
       - name: Flutter platformlarını üret
         working-directory: mobile
-        run: flutter create --platforms=android,ios --org com.mazdek --project-name mazdek_ai --android-language kotlin .
+        run: flutter create --no-pub --platforms=android,ios --org com.mazdek --project-name mazdek_ai --android-language kotlin .
       - name: iOS platform, marka, sürüm ve alan adı uyumluluklarını uygula
         run: |
           python3 ci_patch.py
           python3 ci_branding_domain.py
           grep -q '^version: 2.1.2+4$' mobile/pubspec.yaml
           grep -q "static const String appName = 'Mazdek'" mobile/lib/core/config/app_config.dart
-          grep -q 'https://api.izozer.com' mobile/lib/core/config/app_config.dart
+          grep -q "static const String productionApiUrl = 'https://api.izozer.com'" mobile/lib/core/config/app_config.dart
       - name: Bağımlılıkları çöz
         working-directory: mobile
         run: flutter pub get
@@ -144,7 +97,7 @@ jobs:
           --dart-define=APPLE_REDIRECT_URI=https://api.izozer.com/auth/apple/callback
       - name: Simulator uygulamasını paketle
         run: ditto -c -k --sequesterRsrc --keepParent mobile/build/ios/iphonesimulator/Runner.app mobile/build/ios/mazdek-ios-simulator.zip
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: mazdek-ios-api-izozer-simulator
           path: mobile/build/ios/mazdek-ios-simulator.zip

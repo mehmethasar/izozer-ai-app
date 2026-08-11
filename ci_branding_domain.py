@@ -25,8 +25,13 @@ def rewrite_text(path: str, transform) -> None:
 def configure_app_config(text: str) -> str:
     text = re.sub(r"static const String appName = '[^']*';", "static const String appName = 'Mazdek';", text)
     text = re.sub(
-        r"defaultValue: kReleaseMode \? '[^']*' : 'http://10\.0\.2\.2:8787',",
-        "defaultValue: kReleaseMode ? 'https://api.izozer.com' : 'http://10.0.2.2:8787',",
+        r"static const String productionApiUrl = '[^']*';",
+        "static const String productionApiUrl = 'https://api.izozer.com';",
+        text,
+    )
+    text = re.sub(
+        r"static const String productionApiHost = '[^']*';",
+        "static const String productionApiHost = 'api.izozer.com';",
         text,
     )
     return text
